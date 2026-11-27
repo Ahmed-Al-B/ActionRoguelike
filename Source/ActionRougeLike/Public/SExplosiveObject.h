@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	URadialForceComponent* RadialForceComp;
 
+	UFUNCTION(BlueprintCallable, Category = "ExplosiveObject")
+	void Explode();
+
 	virtual void PostInitializeComponents() override;
 	
 	UFUNCTION()

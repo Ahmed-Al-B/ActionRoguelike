@@ -32,6 +32,19 @@ ASExplosiveObject::ASExplosiveObject()
 }
 
 
+void ASExplosiveObject::Explode()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Explode Barrel!"));
+
+	RadialForceComp->FireImpulse();
+	UE_LOG(LogTemp, Log, TEXT("ExplosiveObject exploded!"));
+}
+
+void ASExplosiveObject::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Explode();
+}
+
 void ASExplosiveObject::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -40,11 +53,11 @@ void ASExplosiveObject::PostInitializeComponents()
 }
 
 
-void ASExplosiveObject::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
-{
-	RadialForceComp->FireImpulse();
-	UE_LOG(LogTemp, Log, TEXT("OnActorHit in ExplosiveObject"));
-}
+//void ASExplosiveObject::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+//{
+//	RadialForceComp->	();
+//	UE_LOG(LogTemp, Log, TEXT("OnActorHit in ExplosiveObject"));
+//}
 
 
 
