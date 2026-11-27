@@ -12,6 +12,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInputMappingContext;
 class UInputAction;
+class USInteractionComponent;
+class UAnimMontage;
 
 UCLASS()
 class ACTIONROUGELIKE_API ASCharacter : public ACharacter
@@ -21,6 +23,7 @@ class ACTIONROUGELIKE_API ASCharacter : public ACharacter
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
 	TSubclassOf<AActor> ProjectileClass;
+
 
 
 public:
@@ -52,6 +55,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* JumpAction;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* InteractAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
+	FTimerHandle TimerHandle_Shoot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
+	float ShootDelay = 0.25f;
+
+	
+
 	float IdleLookTimer = 0.0f;
 	float StoppedCameraYaw = 0.0f;
 	bool bWantsIdleTurn = false;
@@ -61,6 +75,14 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Shoot(const FInputActionValue& Value);
+	void Shoot_TimeElapsed();
+	void Enteract(const FInputActionValue& Value);
+
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	USInteractionComponent* InteractionComp;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	UAnimMontage* ShootAnim;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

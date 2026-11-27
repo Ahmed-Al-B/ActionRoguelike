@@ -9,6 +9,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "SInteractionComponent.h"
+//#include "../../../../../../../Source/Runtime/Engine/Classes/GameFramework/Actor.h"
+
+
+//#include "Engine/Engine.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -23,6 +28,7 @@ ASCharacter::ASCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
 
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
 
 	//bUseControllerRotationYaw = false;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -119,7 +125,20 @@ void ASCharacter::Look(const FInputActionValue& Value)
 
 void ASCharacter::Shoot(const FInputActionValue& Value)
 {
+	PlayAnimMontage(ShootAnim);
+
+
+
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Shoot action triggered!"));
+
+	
+	GetWorldTimerManager().SetTimer(TimerHandle_Shoot, this, &ASCharacter::Shoot_TimeElapsed, ShootDelay);
+	//GetWorldTimerManager().ClearTimer(TimerHandle_Shoot);
+	}
+
+
+void ASCharacter::Shoot_TimeElapsed()
+{
 
 	FVector HandLocation = GetMesh()->GetSocketLocation("Left_Pincer_Arm_2");
 
@@ -135,8 +154,16 @@ void ASCharacter::Shoot(const FInputActionValue& Value)
 	SpawnParams.Instigator = this;
 
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+
 }
 
+void ASCharacter::Enteract(const FInputActionValue& Value)
+{
+	if (InteractionComp)
+	{
+		InteractionComp->PrimaryInteract();
+	}
+}
 
 //void ASCharacter::Shoot(const FInputActionValue& Value)
 //{
@@ -255,6 +282,7 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInput->BindAction(ShootAction, ETriggerEvent::Started, this, &ASCharacter::Shoot);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &ASCharacter::Enteract);
 	}
 }
 
