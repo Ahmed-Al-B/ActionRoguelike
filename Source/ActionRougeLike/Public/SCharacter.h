@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Templates/SubclassOf.h"
 #include "SCharacter.generated.h"
 	
 class UCameraComponent;
@@ -16,6 +17,11 @@ UCLASS()
 class ACTIONROUGELIKE_API ASCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
+	TSubclassOf<AActor> ProjectileClass;
+
 
 public:
 	// Sets default values for this character's properties
@@ -40,10 +46,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* LookAction;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* ShootAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* JumpAction;
+
+	float IdleLookTimer = 0.0f;
+	float StoppedCameraYaw = 0.0f;
+	bool bWantsIdleTurn = false;
+	bool bWasMoving = false;
+
 	void MoveForward(float Value);
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-
+	void Shoot(const FInputActionValue& Value);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
