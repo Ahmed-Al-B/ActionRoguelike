@@ -15,6 +15,8 @@ class UInputAction;
 class USInteractionComponent;
 class UAnimMontage;
 
+
+
 UCLASS()
 class ACTIONROUGELIKE_API ASCharacter : public ACharacter
 {
@@ -23,6 +25,12 @@ class ACTIONROUGELIKE_API ASCharacter : public ACharacter
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
+	TSubclassOf<AActor> BlackHoleClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
+	TSubclassOf<AActor> TeleportClass;
 
 
 
@@ -34,6 +42,7 @@ protected:
 	// Called when the game starts or when spawned
 
 	virtual void BeginPlay() override;
+	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
@@ -58,6 +67,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* BlackHoleAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* TeleportAction;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectiles")
 	FTimerHandle TimerHandle_Shoot;
 
@@ -75,7 +91,13 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Shoot(const FInputActionValue& Value);
-	void Shoot_TimeElapsed();
+	void BlackHole(const FInputActionValue& Value);
+	void Teleport(const FInputActionValue& Value);
+
+	void StartAttackEffects(TSubclassOf<AActor> ClassToSpawn, FName SocketName);
+	void Shoot_TimeElapsed(TSubclassOf<AActor> ClassToSpawn, FName SocketName);
+	
+	
 	void Enteract(const FInputActionValue& Value);
 
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")

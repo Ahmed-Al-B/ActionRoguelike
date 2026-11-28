@@ -4,13 +4,18 @@
 #include "SCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+//#include "GameFramework/Actor.h"
+
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+
 #include "SInteractionComponent.h"
 //#include "../../../../../../../Source/Runtime/Engine/Classes/GameFramework/Actor.h"
+
+//#include "Actor.h"
 
 
 //#include "Engine/Engine.h"
@@ -61,6 +66,19 @@ void ASCharacter::BeginPlay()
 }
 
 
+
+void ASCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
+{
+	if (CameraComp)
+	{
+		OutLocation = CameraComp->GetComponentLocation();
+		OutRotation = CameraComp->GetComponentRotation();
+	}
+	else
+	{
+		Super::GetActorEyesViewPoint(OutLocation, OutRotation);
+	}
+}
 
 void ASCharacter::MoveForward(float Value) {
 	AddMovementInput(GetActorForwardVector(), Value);
@@ -123,40 +141,107 @@ void ASCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+//void ASCharacter::Shoot(const FInputActionValue& Value)
+//{
+//	PlayAnimMontage(ShootAnim);
+//
+//
+//
+//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Shoot action triggered!"));
+//
+//	
+//	GetWorldTimerManager().SetTimer(TimerHandle_Shoot, this, &ASCharacter::Shoot_TimeElapsed, ShootDelay);
+//	//GetWorldTimerManager().ClearTimer(TimerHandle_Shoot);
+//	}
+
 void ASCharacter::Shoot(const FInputActionValue& Value)
+{
+	// Left-click / Primary Attack: shoots ProjectileClass from Left_Pincer_Arm_2
+	StartAttackEffects(ProjectileClass, TEXT("Left_Pincer_Arm_2"));
+}
+
+void ASCharacter::BlackHole(const FInputActionValue& Value)
+{
+	// Right-click / Secondary Attack: shoots BlackHoleClass from Right_Pincer_Arm_2
+	StartAttackEffects(BlackHoleClass, TEXT("Right_Pincer_Arm_2"));
+}
+
+
+
+void ASCharacter::Teleport(const FInputActionValue& Value)
+{
+	// Right-click / Secondary Attack: shoots BlackHoleClass from Right_Pincer_Arm_2
+	StartAttackEffects(TeleportClass, TEXT("Right_Pincer_Arm_2"));
+}
+
+
+void ASCharacter::StartAttackEffects(TSubclassOf<AActor> ClassToSpawn, FName SocketName)
 {
 	PlayAnimMontage(ShootAnim);
 
+	// Bind Shoot_TimeElapsed WITH its two arguments!
+	FTimerDelegate Delegate;
+	Delegate.BindUObject(this, &ASCharacter::Shoot_TimeElapsed, ClassToSpawn, SocketName);
 
+	GetWorldTimerManager().SetTimer(TimerHandle_Shoot, Delegate, ShootDelay, false);
+}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Shoot action triggered!"));
+void ASCharacter::Shoot_TimeElapsed(TSubclassOf<AActor> ClassToSpawn, FName SocketName)
+{
 
-	
-	GetWorldTimerManager().SetTimer(TimerHandle_Shoot, this, &ASCharacter::Shoot_TimeElapsed, ShootDelay);
-	//GetWorldTimerManager().ClearTimer(TimerHandle_Shoot);
+	if (!ensure(ClassToSpawn))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ClassToSpawn is not set!"));
+		return;
 	}
 
 
-void ASCharacter::Shoot_TimeElapsed()
-{
-
-	FVector HandLocation = GetMesh()->GetSocketLocation("Left_Pincer_Arm_2");
+	FVector HandLocation = GetMesh()->GetSocketLocation(SocketName);
 
 	// Use GetControlRotation() to aim where the camera is looking, flattened horizontally
 	FRotator ControlRot = GetControlRotation();
-	ControlRot.Pitch = 0.0f;
-	ControlRot.Roll = 0.0f;
+	//ControlRot.Pitch = 0.0f;
+	//ControlRot.Roll = 0.0f;
 
-	FTransform SpawnTM = FTransform(ControlRot, HandLocation);
+	//FTransform SpawnTM = FTransform(ControlRot, HandLocation);
+	//
+
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector End = EyeLocation + (EyeRotation.Vector() * 5000);
+
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this); // Ignore self in the trace
+
+	FHitResult Hit;
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, End, ECC_Visibility, Params);
+
+	FVector TargetPoint = bHit ? Hit.ImpactPoint : End;
+
+	FRotator AimDir = (TargetPoint - HandLocation).Rotation();
+
+
+	//FRotator AimDir = (TargetPoint - HandLocation).Rotation();
+	FVector SpawnLocation = HandLocation + (AimDir.Vector() * 100.0f); // Offset spawn location slightly forward
+
+	FTransform SpawnTM = FTransform(AimDir, SpawnLocation);
+
+
+	//
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParams.Instigator = this;
 
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnTM, SpawnParams);
 
 
 }
+
+
 
 void ASCharacter::Enteract(const FInputActionValue& Value)
 {
@@ -284,6 +369,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &ASCharacter::Enteract);
+		EnhancedInput->BindAction(BlackHoleAction, ETriggerEvent::Started, this, &ASCharacter::BlackHole);
+		EnhancedInput->BindAction(TeleportAction, ETriggerEvent::Started, this, &ASCharacter::Teleport);
 	}
 }
 

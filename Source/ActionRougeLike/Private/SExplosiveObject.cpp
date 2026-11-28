@@ -4,6 +4,7 @@
 #include "SExplosiveObject.h"
 #include "Components/StaticMeshComponent.h"
 #include "PhysicsEngine/RadialForceComponent.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 ASExplosiveObject::ASExplosiveObject()
@@ -38,12 +39,19 @@ void ASExplosiveObject::Explode()
 
 	RadialForceComp->FireImpulse();
 	UE_LOG(LogTemp, Log, TEXT("ExplosiveObject exploded!"));
+
+
 }
 
 void ASExplosiveObject::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Explode();
+	UE_LOG(LogTemp, Warning, TEXT("OtherActor hit!, : %s, at gametime: %f"), *GetNameSafe(OtherActor), GetWorld()->TimeSeconds);
+
+	FString CombinedString = FString::Printf(TEXT("Hit at location!!, : %s, at gametime: %f"), *Hit.ImpactPoint.ToString(), GetWorld()->TimeSeconds);
+	DrawDebugString(GetWorld(), Hit.ImpactPoint, CombinedString, nullptr, FColor::Green, 2.0f, true);
 }
+
 
 void ASExplosiveObject::PostInitializeComponents()
 {
